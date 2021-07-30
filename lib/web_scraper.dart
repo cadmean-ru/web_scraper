@@ -19,7 +19,7 @@ import 'dart:async';
 import 'package:universal_html/html.dart'; // New html library.
 import 'package:universal_html/parsing.dart';
 
-import 'package:http/http.dart'; // Contains a client for making API calls.
+import 'package:http/http.dart' as http;
 
 import 'src/validation.dart'; // Contains validation functions for URLs
 
@@ -49,16 +49,15 @@ class WebScraper {
   Future<bool> loadWebPage(String route) async {
     if (baseUrl != null && baseUrl != '') {
       final stopwatch = Stopwatch()..start();
-      var client = Client();
 
       try {
-        var _response = await client.get(Uri.parse(baseUrl! + route));
+        var _response = await http.get(Uri.parse(baseUrl! + route));
         // Calculating Time Elapsed using timer from dart:core.
         timeElaspsed = stopwatch.elapsed.inMilliseconds;
         stopwatch.stop();
         stopwatch.reset();
         // Parses the response body once it's retrieved to be used on the other methods.
-        _document = parseXmlDocument(_response.body);
+        _document = parseHtmlDocument(_response.body);
       } catch (e) {
         throw WebScraperException(e.toString());
       }
@@ -70,12 +69,11 @@ class WebScraper {
   /// Loads the webpage URL into response object without requiring the two-step process of base + route.
   /// Unlike the the two-step process, the URL is NOT validated before being requested.
   Future<bool> loadFullURL(String page) async {
-    var client = Client();
     try {
-      var _response = await client.get(Uri.parse(page));
+      var _response = await http.get(Uri.parse(page));
       // Calculating Time Elapsed using timer from dart:core.
       // Parses the response body once it's retrieved to be used on the other methods.
-      _document = parseXmlDocument(_response.body);
+      _document = parseHtmlDocument(_response.body);
     } catch (e) {
       throw WebScraperException(e.toString());
     }
@@ -88,7 +86,7 @@ class WebScraper {
   bool loadFromString(String responseBodyAsString) {
     try {
       // Parses the response body once it's retrieved to be used on the other methods.
-      _document = parseXmlDocument(responseBodyAsString);
+      _document = parseHtmlDocument(responseBodyAsString);
     } catch (e) {
       throw WebScraperException(e.toString());
     }
@@ -159,7 +157,7 @@ class WebScraper {
 
   /// Returns webpage's html in string format.
   String getPageContent() => _document != null
-      ? _document!.text!
+      ? _document!.text ?? ''
       : throw WebScraperException(
           'ERROR: Webpage need to be loaded first, try calling loadWebPage');
 
